@@ -85,15 +85,8 @@ impl EventHandler for GameState {
                         self.current_shape.y += 1;
                     }
                 }
-                KeyCode::Up => {
-                    let mut rotated_shape = self.current_shape.shape.clone();
-                    rotated_shape.rotate(1, 1); // Implémente une rotation basique
-                    if self.grid.is_valid_position(&rotated_shape, self.current_shape.x, self.current_shape.y) {
-                        self.current_shape.shape = rotated_shape;
-                    }
-                }
                 KeyCode::Space => {
-                    self.current_shape.shape.rotate(1, 1);
+                    self.current_shape.shape.rotate();
                 }
                 _ => {}
             }

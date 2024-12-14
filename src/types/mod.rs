@@ -1,3 +1,4 @@
 pub mod game;
-mod shapes;
-mod grid;
+pub mod shapes;
+pub mod grid;
+pub mod static_shape;
