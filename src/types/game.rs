@@ -1,65 +1,105 @@
-use ggez::graphics::{self, Color, Mesh};
-use ggez::{Context, GameResult};
+use ggez::event::EventHandler;
+use std::time::{Duration, Instant};
+use ggez::{graphics, Context, GameError, GameResult};
+use ggez::input::keyboard::KeyInput;
+use crate::types::grid::Grid;
+use crate::types::shapes::{Block, Shape};
 
-
-const GRID_WIDTH: usize = 100;
-const CELL_WIDTH: f32 = 10.0;
-const GRID_HEIGHT: usize = 100;
-
-pub type Grid = [[Option<u8>; GRID_WIDTH]; GRID_HEIGHT];
-
-pub struct Block {
-    shape: Vec<Vec<u8>>,
-    x: i32,
-    y: i32,
-}
-
-pub struct GameState {
+pub struct GameState{
     grid: Grid,
-    current_block: Block,
-    next_block: Block,
+    current_shape: Block,
+    next_shape: Block,
     score: u32,
-    game_over: bool,
+    last_update: Instant,
+    action: bool,
 }
 
-impl GameState {
-    pub fn new(_ctx: &mut Context) -> Self {
+impl GameState{
+    const GRID_SIZE: (usize, usize) = (10, 20);
+    pub fn new() -> Self {
+        let grid = Grid::new(Self::GRID_SIZE.0, Self::GRID_SIZE.1);
         Self {
-            grid: [[None; GRID_WIDTH]; GRID_HEIGHT],
-            current_block: Block {
-                shape: vec![vec![1, 1], vec![1, 1]],
-                x: (GRID_WIDTH / 2) as i32,
-                y: 0,
-            },
-            next_block: Block {
-                shape: vec![vec![1, 1], vec![1, 1]],
-                x: (GRID_WIDTH / 2) as i32,
-                y: 0,
-            },
+            grid,
+            current_shape: Block::new(Shape::random(), 0, 0),
+            next_shape: Block::new(Shape::random(), 0, 0),
             score: 0,
-            game_over: false,
+            last_update: Instant::now(),
+            action: false,
         }
     }
 }
 
+impl EventHandler for GameState {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        if self.last_update.elapsed() <= Duration::from_secs(1) && !self.action {
+            return Ok(());
+        }
+        self.last_update = Instant::now();
+        self.action = false;
 
-impl ggez::event::EventHandler for GameState {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if self.grid.is_valid_position(&self.current_shape.shape, self.current_shape.x, self.current_shape.y + 1) {
+            self.current_shape.y += 1;
+        } else {
+            self.grid.place_shape(&self.current_shape.shape, self.current_shape.x, self.current_shape.y);
+
+            let lines_cleared = self.grid.clear_full_lines();
+            self.score += lines_cleared as u32 * 100;
+
+            self.current_shape = self.next_shape.clone();
+            self.next_shape = Block::new(Shape::random(), 5, 0);
+
+            if !self.grid.is_valid_position(&self.current_shape.shape, self.current_shape.x, self.current_shape.y) {
+                println!("Game Over!");
+                return Ok(());
+            }
+        }
         Ok(())
     }
 
-    fn draw(&mut self, ctx: &mut Context) -> ggez::GameResult {
-        let mut canvas = graphics::Canvas::from_frame(ctx, Color::WHITE);
-        for i in 0..self.grid[0].len() {
-            let x = i as f32 * CELL_WIDTH;
-            let line = Mesh::new_line(
-                ctx,                 
-                &[ggez::mint::Point2 { x, y: 0.0 }, ggez::mint::Point2 { x, y: GRID_HEIGHT as f32 * CELL_WIDTH }],
-                1.0,
-                Color::BLACK
-                ).expect("Erreur lors de la construction de la grille");
-            canvas.draw(&line, graphics::DrawParam::default());
-        }
-        canvas.finish(ctx)
+    fn draw(&mut self, _ctx: &mut Context) -> Result<(), GameError> {
+        let mut canvas = graphics::Canvas::from_frame(_ctx, None);
+        self.grid.draw(&mut canvas, _ctx);
+        self.current_shape.draw(&mut canvas, _ctx);
+        self.next_shape.draw(&mut canvas, _ctx);
+        canvas.finish(_ctx)?;
+        Ok(())
     }
+
+    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _repeated: bool) -> Result<(), GameError> {
+        use ggez::input::keyboard::KeyCode;
+
+        if let Some(keycode) = input.keycode {
+            match keycode {
+                KeyCode::Left => {
+                    if self.grid.is_valid_position(&self.current_shape.shape, self.current_shape.x - 1, self.current_shape.y) {
+                        self.current_shape.x -= 1;
+                    }
+                }
+                KeyCode::Right => {
+                    if self.grid.is_valid_position(&self.current_shape.shape, self.current_shape.x + 1, self.current_shape.y) {
+                        self.current_shape.x += 1;
+                    }
+                }
+                KeyCode::Down => {
+                    if self.grid.is_valid_position(&self.current_shape.shape, self.current_shape.x, self.current_shape.y + 1) {
+                        self.current_shape.y += 1;
+                    }
+                }
+                KeyCode::Up => {
+                    let mut rotated_shape = self.current_shape.shape.clone();
+                    rotated_shape.rotate(1, 1); // Implémente une rotation basique
+                    if self.grid.is_valid_position(&rotated_shape, self.current_shape.x, self.current_shape.y) {
+                        self.current_shape.shape = rotated_shape;
+                    }
+                }
+                KeyCode::Space => {
+                    self.current_shape.shape.rotate(1, 1);
+                }
+                _ => {}
+            }
+        }
+        self.action = true;
+        Ok(())
+    }
+
 }
