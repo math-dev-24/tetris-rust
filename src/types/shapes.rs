@@ -16,19 +16,26 @@ impl Block {
         Self {shape, col: x, row: y, weight: w, margin: m}
     }
     pub fn draw(&self, canvas: &mut graphics::Canvas, ctx: &mut ggez::Context) {
-        let mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            graphics::Rect::new(
-                self.col as f32 * self.weight + self.margin,
-                self.row as f32 * self.weight + self.margin,
-                self.weight,
-                self.weight,
-            ),
-            self.shape.color,
-        )
-        .unwrap();
-        canvas.draw(&mesh, graphics::DrawParam::default());
+        for (d_col, d_row) in &self.shape.shape_position {
+            let n_col = self.col + d_col;
+            let n_row = self.row + d_row;
+
+            if n_col >= 0 && n_col < 10 && n_row >= 0 && n_row < 20 {
+                let mesh = graphics::Mesh::new_rectangle(
+                    ctx,
+                    graphics::DrawMode::fill(),
+                    graphics::Rect::new(
+                        n_col as f32 * self.weight + self.margin,
+                        n_row as f32 * self.weight + self.margin,
+                        self.weight,
+                        self.weight,
+                    ),
+                    self.shape.color,
+                )
+                .unwrap();
+                canvas.draw(&mesh, graphics::DrawParam::default());
+            }
+        }
     }
 }
 
@@ -42,6 +49,7 @@ impl Shape {
     pub fn new(blocks: Vec<(i32, i32)>, color: graphics::Color) -> Self {
         Self { shape_position: blocks, color }
     }
+
     pub fn rotate(&mut self) {
         self.shape_position = self.shape_position
             .iter()

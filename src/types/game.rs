@@ -1,7 +1,9 @@
 use ggez::event::EventHandler;
 use std::time::{Duration, Instant};
 use ggez::{graphics, Context, GameError, GameResult};
+use ggez::graphics::{Color, DrawParam, Text};
 use ggez::input::keyboard::KeyInput;
+use rand::Rng;
 use crate::types::grid::Grid;
 use crate::types::shapes::{Block, Shape};
 
@@ -19,7 +21,7 @@ impl GameState{
     pub fn new() -> Self {
         let weight = 25.0;
         let margin = 10.0;
-        let mut grid = Grid::new(
+        let grid = Grid::new(
             Self::GRID_SIZE.0,
             Self::GRID_SIZE.1,
             Block::new(Shape::random(), 0, 0, weight, margin),
@@ -36,11 +38,59 @@ impl GameState{
             is_game_over: false,
         }
     }
+
+    fn draw_next_block(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
+        let index_x = self.grid.width as f32 * self.grid.weight + (self.grid.margin * 2.0);
+        let mut index_y = 100.0;
+
+        let text = Text::new("Suivant");
+        let draw_params = DrawParam::default()
+            .dest([index_x, index_y])
+            .color(Color::WHITE)
+            .scale([2.0, 2.0]);
+        canvas.draw(&text, draw_params);
+
+        index_y += 40.0;
+
+        let rect = graphics::Mesh::new_rectangle(
+            _ctx,
+            graphics::DrawMode::fill(),
+            graphics::Rect::new(
+                index_x,
+                index_y,
+                5.0 * self.grid.weight,
+                5.0 * self.grid.weight,
+            ),
+            Color::new(0.3, 0.3, 0.3, 1.0),
+        ).unwrap();
+
+        canvas.draw(&rect, graphics::DrawParam::default());
+
+        for (d_col, d_row) in &self.next_block.shape.shape_position {
+            let n_col = *d_col as f32;
+            let n_row = *d_row as f32;
+
+            let mesh = graphics::Mesh::new_rectangle(
+                    _ctx,
+                    graphics::DrawMode::fill(),
+                    graphics::Rect::new(
+                        index_x + n_col * self.grid.weight + self.grid.margin * 2.0,
+                        index_y + n_row * self.grid.weight + self.grid.margin * 2.0,
+                        self.grid.weight,
+                        self.grid.weight,
+                    ),
+                    self.next_block.shape.color,
+            ).unwrap();
+            canvas.draw(&mesh, graphics::DrawParam::default());
+        }
+    }
 }
 
 impl EventHandler for GameState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        if self.last_update.elapsed() <= Duration::from_millis(500) && !self.action {
+        let time_millis_second = 300;
+
+        if self.last_update.elapsed() <= Duration::from_millis(time_millis_second) && !self.action {
             return Ok(());
         }
         if self.is_game_over {
@@ -56,7 +106,9 @@ impl EventHandler for GameState {
             self.grid.place_shape();
 
             let tmp_next_shape: Block = self.next_block.clone();
-            self.next_block = Block::new(Shape::random(), 0, 0, self.grid.weight, self.grid.margin);
+            let rand_x = rand::thread_rng().gen_range(0..(self.grid.width - 4));
+
+            self.next_block = Block::new(Shape::random(), rand_x as i32, 0, self.grid.weight, self.grid.margin);
             self.grid.spawn_new_block(tmp_next_shape);
 
             // checker si une line est possible de clear
@@ -77,6 +129,8 @@ impl EventHandler for GameState {
         let mut canvas = graphics::Canvas::from_frame(_ctx, None);
         self.grid.draw(&mut canvas, _ctx);
         self.grid.active_block.draw(&mut canvas, _ctx);
+        self.grid.draw_score(&mut canvas, _ctx, self.score);
+        self.draw_next_block(&mut canvas, _ctx);
         canvas.finish(_ctx)?;
         Ok(())
     }
@@ -102,7 +156,21 @@ impl EventHandler for GameState {
                     }
                 }
                 KeyCode::Space => {
-                    self.grid.active_block.shape.rotate();
+                    let mut tmp_shape = self.grid.active_block.shape.clone();
+                    tmp_shape.rotate();
+                    let mut can_rotate = true;
+
+                    for &(d_col, d_row) in &tmp_shape.shape_position {
+                        let n_col = self.grid.active_block.col + d_col;
+                        let n_row = self.grid.active_block.row + d_row;
+                        if n_col < 0 || n_col >= self.grid.width as i32 || n_row < 0 || n_row >= self.grid.height as i32 {
+                            can_rotate = false;
+                            break;
+                        }
+                    }
+                    if can_rotate {
+                        self.grid.active_block.shape.rotate();
+                    }
                 }
                 _ => {}
             }
