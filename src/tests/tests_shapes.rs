@@ -9,7 +9,7 @@ mod tests {
         let mut cube = SCUBE.clone();
         cube.rotate();
         let cube2 = vec![(0, 0), (0, -1), (1, 0), (1, -1)];
-        assert_eq!(cube.blocks, cube2);
+        assert_eq!(cube.shape_position, cube2);
     }
 
     #[test]
@@ -17,7 +17,7 @@ mod tests {
         let mut line = SLINE.clone();
         line.rotate();
         let line2 = vec![(0, 0), (1, 0), (2, 0), (3, 0)];
-        assert_eq!(line.blocks, line2);
+        assert_eq!(line.shape_position, line2);
     }
 
     #[test]
@@ -26,7 +26,7 @@ mod tests {
         line.rotate();
         line.rotate();
         let line2 = vec![(0, 0), (0, -1), (0, -2), (0, -3)];
-        assert_eq!(line.blocks, line2);
+        assert_eq!(line.shape_position, line2);
     }
 
     #[test]
@@ -34,7 +34,7 @@ mod tests {
         let mut l_shape = SL.clone();
         l_shape.rotate();
         let expected = vec![(0, 0), (0, -1), (1, -1)];
-        assert_eq!(l_shape.blocks, expected);
+        assert_eq!(l_shape.shape_position, expected);
     }
 
     #[test]
@@ -50,7 +50,7 @@ mod tests {
         let mut z_shape = SZ.clone();
         z_shape.rotate();
         let expected = vec![(0, 0), (0, -1), (1, -1), (1, -2)];
-        assert_eq!(z_shape.blocks, expected);
+        assert_eq!(z_shape.shape_position, expected);
     }
 
     #[test]
@@ -59,6 +59,6 @@ mod tests {
         z_shape.rotate();
         z_shape.rotate();
         let expected = vec![(0, 0), (-1, 0), (-1, -1), (-2, -1)];
-        assert_eq!(z_shape.blocks, expected);
+        assert_eq!(z_shape.shape_position, expected);
     }
 }
