@@ -92,7 +92,7 @@ impl GameState{
         }
     }
 
-    pub fn draw_score(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
+    fn draw_score(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
 
         let x = self.grid.weight * self.grid.width as f32 + self.grid.margin * 2.0;
         let y =  20.0;

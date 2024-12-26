@@ -7,7 +7,7 @@ pub struct Grid {
     pub height: usize,
     pub weight: f32,
     pub margin: f32,
-    pub cells: Vec<Vec<Option<graphics::Color>>>,
+    cells: Vec<Vec<Option<graphics::Color>>>,
     pub active_block: Block,
 }
 
@@ -45,8 +45,6 @@ impl Grid {
 
     // Place une forme sur la grille
     pub fn place_shape(&mut self) {
-        println!("Placer la shape");
-        println!("col: {}, row: {}", self.active_block.col, self.active_block.row);
         for &(d_col, d_row) in &self.active_block.shape.shape_position {
             let n_col = self.active_block.col + d_col;
             let n_row = self.active_block.row + d_row;
