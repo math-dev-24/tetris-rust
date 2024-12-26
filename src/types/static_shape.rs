@@ -37,4 +37,9 @@ pub static SLL: Lazy<Shape> = Lazy::new(|| Shape {
     color: graphics::Color::new(0.6, 0.1, 1.0, 1.0),
 });
 
-pub static SHAPES: Lazy<Vec<&'static Shape>> = Lazy::new(|| vec![&SCUBE, &SLINE, &SL, &SZ, &SE, &SBT, &SLL]);
+pub static SS: Lazy<Shape> = Lazy::new(|| Shape {
+    shape_position: vec![(0, 0)],
+    color: graphics::Color::new(0.1, 0.2, 0.5, 1.0),
+});
+
+pub static SHAPES: Lazy<Vec<&'static Shape>> = Lazy::new(|| vec![&SCUBE, &SLINE, &SL, &SZ, &SE, &SBT, &SLL, &SS]);

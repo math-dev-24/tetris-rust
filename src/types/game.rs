@@ -1,7 +1,7 @@
 use ggez::event::EventHandler;
 use std::time::{Duration, Instant};
 use ggez::{graphics, Context, GameError, GameResult};
-use ggez::graphics::{Color, DrawParam, Text, TextFragment, PxScale, FontData};
+use ggez::graphics::{Color, DrawParam, Text, TextFragment, PxScale};
 use ggez::input::keyboard::KeyInput;
 use rand::Rng;
 use crate::types::grid::Grid;
@@ -42,7 +42,7 @@ impl GameState{
 
     fn draw_next_block(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
         let index_x = self.grid.width as f32 * self.grid.weight + (self.grid.margin * 2.0);
-        let mut index_y = 100.0;
+        let mut index_y = self.grid.margin + 100.0;
 
         let text_fragment = TextFragment {
             text: "Suivant :".to_string(),
@@ -65,8 +65,8 @@ impl GameState{
             graphics::Rect::new(
                 index_x,
                 index_y,
-                6.0 * self.grid.weight,
-                6.0 * self.grid.weight,
+                5.0 * self.grid.weight + self.grid.margin * 2.0,
+                5.0 * self.grid.weight  + self.grid.margin * 2.0,
             ),
             Color::new(0.3, 0.3, 0.3, 1.0),
         ).unwrap();
@@ -77,25 +77,36 @@ impl GameState{
             let n_col = *d_col as f32;
             let n_row = *d_row as f32;
 
-            let mesh = graphics::Mesh::new_rectangle(
-                    _ctx,
-                    graphics::DrawMode::fill(),
-                    graphics::Rect::new(
-                        index_x + n_col * self.grid.weight + self.grid.margin * 2.0,
-                        index_y + n_row * self.grid.weight + self.grid.margin * 2.0,
-                        self.grid.weight,
-                        self.grid.weight,
-                    ),
-                    self.next_block.shape.color,
+            let rect = graphics::Rect::new(
+                n_col * self.grid.weight + (self.grid.margin * 3.0) + self.grid.width as f32 * self.grid.weight,
+                n_row * self.grid.weight + index_y + self.grid.margin,
+                self.grid.weight,
+                self.grid.weight,
+            );
+
+            let filled_mesh = graphics::Mesh::new_rectangle(
+                _ctx,
+                graphics::DrawMode::fill(),
+                rect,
+                self.next_block.shape.color,
             ).unwrap();
-            canvas.draw(&mesh, graphics::DrawParam::default());
+            canvas.draw(&filled_mesh, graphics::DrawParam::default());
+
+            let border_mesh = graphics::Mesh::new_rectangle(
+                _ctx,
+                graphics::DrawMode::stroke(1.0),
+                rect,
+                graphics::Color::new(0.2, 0.2, 0.2, 1.0),
+            )
+                .unwrap();
+            canvas.draw(&border_mesh, graphics::DrawParam::default());
         }
     }
 
     fn draw_score(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
 
         let x = self.grid.weight * self.grid.width as f32 + self.grid.margin * 2.0;
-        let y =  20.0;
+        let y =  self.grid.margin;
 
         let rect = graphics::Mesh::new_rectangle(
             _ctx,

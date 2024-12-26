@@ -76,35 +76,69 @@ impl Grid {
     }
 
     pub fn draw(&self, canvas: &mut graphics::Canvas, ctx: &mut ggez::Context) {
-        let border = graphics::Mesh::new_rectangle(
+
+        let rect_board = graphics::Rect::new(
+            self.margin,
+            self.margin,
+            self.width as f32 * self.weight,
+            self.height as f32 * self.weight
+        );
+
+        let filled_board = graphics::Mesh::new_rectangle(
             ctx,
             graphics::DrawMode::fill(),
-            graphics::Rect::new(
-                self.margin,
-                self.margin,
-                self.width as f32 * self.weight,
-                self.height as f32 * self.weight
-            ),
+            rect_board,
             graphics::Color::new(0.2, 0.2, 0.2, 1.0),
         )
             .unwrap();
-        canvas.draw(&border, graphics::DrawParam::default());
+        canvas.draw(&filled_board, graphics::DrawParam::default());
+
+        let border_board = graphics::Mesh::new_rectangle(
+            ctx,
+            graphics::DrawMode::stroke(3.0),
+            rect_board,
+            graphics::Color::new(0.0, 0.0, 0.0, 1.0),
+        )
+            .unwrap();
+        canvas.draw(&border_board, graphics::DrawParam::default());
 
         for (y, row) in self.cells.iter().enumerate() {
             for (x, cell) in row.iter().enumerate() {
+                let rect = graphics::Rect::new(
+                    x as f32 * self.weight + self.margin,
+                    y as f32 * self.weight + self.margin,
+                    self.weight,
+                    self.weight,
+                );
+
                 if let Some(color) = cell {
-                    let mesh = graphics::Mesh::new_rectangle(
+                    let filled_mesh = graphics::Mesh::new_rectangle(
                         ctx,
                         graphics::DrawMode::fill(),
-                        graphics::Rect::new(x as f32 * self.weight + self.margin,
-                                            y as f32 * self.weight + self.margin,
-                                            self.weight,
-                                            self.weight
-                        ),
+                        rect,
                         *color,
                     )
                         .unwrap();
-                    canvas.draw(&mesh, graphics::DrawParam::default());
+                    canvas.draw(&filled_mesh, graphics::DrawParam::default());
+
+                    let border_mesh = graphics::Mesh::new_rectangle(
+                        ctx,
+                        graphics::DrawMode::stroke(1.0),
+                        rect,
+                        graphics::Color::new(0.2, 0.2, 0.2, 1.0),
+                    )
+                        .unwrap();
+                    canvas.draw(&border_mesh, graphics::DrawParam::default());
+                }else {
+
+                    let border_mesh = graphics::Mesh::new_rectangle(
+                        ctx,
+                        graphics::DrawMode::stroke(1.0),
+                        rect,
+                        graphics::Color::new(0.1, 0.1, 0.1, 1.0),
+                    )
+                        .unwrap();
+                    canvas.draw(&border_mesh, graphics::DrawParam::default());
                 }
             }
         }

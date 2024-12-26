@@ -20,21 +20,30 @@ impl Block {
             let n_col = self.col + d_col;
             let n_row = self.row + d_row;
 
-            if n_col >= 0 && n_col < 10 && n_row >= 0 && n_row < 20 {
-                let mesh = graphics::Mesh::new_rectangle(
-                    ctx,
-                    graphics::DrawMode::fill(),
-                    graphics::Rect::new(
-                        n_col as f32 * self.weight + self.margin,
-                        n_row as f32 * self.weight + self.margin,
-                        self.weight,
-                        self.weight,
-                    ),
-                    self.shape.color,
-                )
+            let rect = graphics::Rect::new(
+                n_col as f32 * self.weight + self.margin,
+                n_row as f32 * self.weight + self.margin,
+                self.weight,
+                self.weight,
+            );
+
+            let filled_mesh = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::fill(),
+                rect,
+                self.shape.color,
+            ).unwrap();
+
+            canvas.draw(&filled_mesh, graphics::DrawParam::default());
+
+            let border_mesh = graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::stroke(1.0),
+                rect,
+                graphics::Color::new(0.2, 0.2, 0.2, 1.0),
+            )
                 .unwrap();
-                canvas.draw(&mesh, graphics::DrawParam::default());
-            }
+            canvas.draw(&border_mesh, graphics::DrawParam::default());
         }
     }
 }
