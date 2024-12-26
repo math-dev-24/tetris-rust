@@ -1,6 +1,5 @@
 use ggez::graphics;
 use crate::types::shapes::Block;
-use ggez::graphics::{Color, DrawParam, Text};
 
 
 pub struct Grid {
@@ -111,18 +110,5 @@ impl Grid {
                 }
             }
         }
-    }
-
-    pub fn draw_score(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context, score: u32) {
-        let text = Text::new(format!("Score: {}", score));
-
-        let x = self.width as f32 * self.weight + self.margin;
-        let y =  20.0;
-
-        let draw_params = DrawParam::default()
-            .dest([x, y])
-            .color(Color::WHITE)
-            .scale([4.0, 4.0]);
-        canvas.draw(&text, draw_params);
     }
 }

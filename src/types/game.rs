@@ -1,7 +1,7 @@
 use ggez::event::EventHandler;
 use std::time::{Duration, Instant};
 use ggez::{graphics, Context, GameError, GameResult};
-use ggez::graphics::{Color, DrawParam, Text};
+use ggez::graphics::{Color, DrawParam, Text, TextFragment, PxScale, FontData};
 use ggez::input::keyboard::KeyInput;
 use rand::Rng;
 use crate::types::grid::Grid;
@@ -16,11 +16,12 @@ pub struct GameState{
     is_game_over: bool,
 }
 
+
 impl GameState{
     const GRID_SIZE: (usize, usize) = (10, 20);
     pub fn new() -> Self {
-        let weight = 25.0;
-        let margin = 10.0;
+        let weight = 40.0;
+        let margin = 30.0;
         let grid = Grid::new(
             Self::GRID_SIZE.0,
             Self::GRID_SIZE.1,
@@ -43,11 +44,17 @@ impl GameState{
         let index_x = self.grid.width as f32 * self.grid.weight + (self.grid.margin * 2.0);
         let mut index_y = 100.0;
 
-        let text = Text::new("Suivant");
+        let text_fragment = TextFragment {
+            text: "Suivant :".to_string(),
+            color: Some(Color::WHITE),
+            scale: Some(PxScale::from(40.0)),
+            ..Default::default()
+        };
+
         let draw_params = DrawParam::default()
-            .dest([index_x, index_y])
-            .color(Color::WHITE)
-            .scale([2.0, 2.0]);
+            .dest([index_x, index_y]);
+
+        let text = Text::new(text_fragment);
         canvas.draw(&text, draw_params);
 
         index_y += 40.0;
@@ -58,8 +65,8 @@ impl GameState{
             graphics::Rect::new(
                 index_x,
                 index_y,
-                5.0 * self.grid.weight,
-                5.0 * self.grid.weight,
+                6.0 * self.grid.weight,
+                6.0 * self.grid.weight,
             ),
             Color::new(0.3, 0.3, 0.3, 1.0),
         ).unwrap();
@@ -84,16 +91,88 @@ impl GameState{
             canvas.draw(&mesh, graphics::DrawParam::default());
         }
     }
+
+    pub fn draw_score(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
+
+        let x = self.grid.weight * self.grid.width as f32 + self.grid.margin * 2.0;
+        let y =  20.0;
+
+        let rect = graphics::Mesh::new_rectangle(
+            _ctx,
+            graphics::DrawMode::fill(),
+            graphics::Rect::new(
+                x,
+                y,
+                self.grid.weight * self.grid.width as f32,
+                50.0,
+            ),
+            Color::new(0.3, 0.3, 0.3, 1.0),
+        ).unwrap();
+
+        canvas.draw(&rect, graphics::DrawParam::default());
+
+        let text_fragment = TextFragment {
+            text: format!("Score: {}", self.score),
+            color: Some(Color::WHITE),
+            scale: Some(PxScale::from(40.0)),
+            ..Default::default()
+        };
+        let draw_params = DrawParam::default()
+            .dest([x + 14.0, y + 7.0]);
+
+        let text = Text::new(text_fragment);
+        canvas.draw(&text, draw_params);
+    }
+
+    fn draw_lose(&self, canvas: &mut graphics::Canvas, _ctx: &mut ggez::Context) {
+
+        let rect = graphics::Mesh::new_rectangle(
+            _ctx,
+            graphics::DrawMode::fill(),
+            graphics::Rect::new(
+                0.0,
+                0.0,
+                1000.0,
+                1000.0,
+            ),
+            Color::new(1.0, 0.0, 0.0, 1.0),
+        ).unwrap();
+
+        canvas.draw(&rect, graphics::DrawParam::default());
+
+        let text_fragment = TextFragment {
+            text: "Game Over".to_string(),
+            color: Some(Color::WHITE),
+            scale: Some(PxScale::from(60.0)),
+            ..Default::default()
+        };
+
+        let draw_params = DrawParam::default()
+            .dest([200.0, 200.0]);
+
+        let text = Text::new(text_fragment);
+        canvas.draw(&text, draw_params);
+    }
 }
 
 impl EventHandler for GameState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        let time_millis_second = 300;
 
-        if self.last_update.elapsed() <= Duration::from_millis(time_millis_second) && !self.action {
+        if self.is_game_over {
             return Ok(());
         }
-        if self.is_game_over {
+
+        let mut time_millis_second = 300;
+        // augmentation de la vitesse de jeu
+        if self.score > 1000 && self.score < 1500 {
+            time_millis_second = 200;
+        }
+
+        if self.score > 1500 {
+            time_millis_second = 100;
+        }
+
+        if self.last_update.elapsed() <= Duration::from_millis(time_millis_second) && !self.action {
             return Ok(());
         }
 
@@ -129,8 +208,11 @@ impl EventHandler for GameState {
         let mut canvas = graphics::Canvas::from_frame(_ctx, None);
         self.grid.draw(&mut canvas, _ctx);
         self.grid.active_block.draw(&mut canvas, _ctx);
-        self.grid.draw_score(&mut canvas, _ctx, self.score);
+        self.draw_score(&mut canvas, _ctx);
         self.draw_next_block(&mut canvas, _ctx);
+        if self.is_game_over {
+            self.draw_lose(&mut canvas, _ctx);
+        }
         canvas.finish(_ctx)?;
         Ok(())
     }

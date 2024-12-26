@@ -7,3 +7,7 @@ edition = "2021"
 ggez = "0.9.3"
 rand = "0.8.5"
 once_cell = "1.20.2"
+
+
+[package.metadata.ggez]
+resources = "assets"
